@@ -1,5 +1,6 @@
 package com.example.tmjtb.morsecode
 
+import kotlinx.android.synthetic.main.content_main.*
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
@@ -9,7 +10,7 @@ import android.text.method.ScrollingMovementMethod
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import com.example.tmjtb.morsecode.R.id.*
+import android.view.inputmethod.InputMethodManager
 
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -29,7 +30,7 @@ class MainActivity : AppCompatActivity() {
 
         testButton.setOnClickListener {view ->
             appendTextAndScroll(inputText.text.toString());
-            hidekeyboard();
+            hideKeyboard();
         }
     }
 
@@ -54,21 +55,21 @@ class MainActivity : AppCompatActivity() {
             outputText.append(text + "\n")
             val layout = outputText.getLayout()
             if (layout != null) {
-                val scrollDelta = (layout!!.getLineBottom(line:outputText. getLineCount () - 1)
+                val scrollDelta = (layout!!.getLineBottom(outputText.getLineCount () - 1)
                 -outputText.getScrollY() - outputText.getHeight())
                 if (scrollDelta > 0)
-                    outputText.scrollBy(x:0, scrollDelta)
+                    outputText.scrollBy(0, scrollDelta)
             }
         }
     }
 
     fun Activity.hideKeyboard() {
-        hideKeyboard(if (currentFocus == null) View(context:this) else currentFocus)
+        hideKeyboard(if (currentFocus == null) View(this) else currentFocus)
     }
 
     fun Context.hideKeyboard(view: View) {
-        val inputMethodManager - getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMedhotdManager
-        inputMethodManager.hideSoftInputFromWindow(view.windowToken), flags:0)
+        val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
 }
