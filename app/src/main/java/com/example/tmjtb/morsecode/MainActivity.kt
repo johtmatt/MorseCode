@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.text.method.ScrollingMovementMethod
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -83,6 +84,33 @@ class MainActivity : AppCompatActivity() {
         val jsonObj = JSONObject(jsonStr.substring(jsonStr.indexOf("{"), jsonStr.lastIndexOf("}") + 1));
 
         return jsonObj;
+    }
+
+    var letToCode : HashMap<String, String> = HashMap()
+    var CodeToLet : HashMap<String, String> = HashMap()
+
+    fun buildDicts(Json: JSONObject) {
+
+        for (k in json.keys()) {
+            var code = json[k];
+
+            letToCodeDict.set(k,code)
+            CodtToLetDict.set(code,k)
+
+            Log.d("log", "$k: $code")
+        }
+    }
+
+    fun showCodes() {
+
+        // Don't forget to wire button under the onCreate function above
+        // textView.append("HERE ARE THE CODES");
+        
+        appendTextAndScroll("HERE ARE THE CODES");
+
+        for (k in letToCodeDict.keys.sorted()) {
+            appendTextAndScroll("$k: ${letToCodeDict[k]}");
+        }
     }
 
 }
