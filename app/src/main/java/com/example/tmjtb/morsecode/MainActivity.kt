@@ -13,6 +13,7 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 
 import kotlinx.android.synthetic.main.activity_main.*
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -70,6 +71,18 @@ class MainActivity : AppCompatActivity() {
     fun Context.hideKeyboard(view: View) {
         val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    fun loadMorseJSONObject() : JSONObject {
+        val filePath = "morse.json";
+
+        val jsonStr = application.assets.open(filepath).bufferedReader().use{
+            it.readText()
+        }
+
+        val jsonObj = JSONObject(jsonStr.substring(jsonStr.indexOf("{"), jsonStr.lastIndexOf("}") + 1));
+
+        return jsonObj;
     }
 
 }
