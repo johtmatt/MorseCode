@@ -32,15 +32,24 @@ class MainActivity : AppCompatActivity() {
 
         translateButton.setOnClickListener { view ->
             appendTextAndScroll(inputText.text.toString());
+            appendTextAndScroll(translate(inputText.text.toString()))
+            hideKeyboard();
+        }
+
+        testButton.setOnClickListener { view ->
+            appendTextAndScroll(inputText.text.toString());
+            //appendTextAndScroll(translate(inputText.text.toString()))
             hideKeyboard();
         }
 
         val jsonObj = loadMorseJSONObject()
 
-        /*legendButton.setOnClickListener { view ->
-            appendTextAndScroll(jsonObj.text.toString());
+        legendButton.setOnClickListener { view ->
+            appendTextAndScroll(jsonObj.toString());
             hideKeyboard();
-        }*/
+        }
+
+        buildDicts(jsonObj)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -84,7 +93,7 @@ class MainActivity : AppCompatActivity() {
     fun loadMorseJSONObject() : JSONObject {
         val filePath = "morse.json";
 
-        val jsonStr = application.assets.open(filepath).bufferedReader().use{
+        val jsonStr = application.assets.open(filePath).bufferedReader().use{
             it.readText()
         }
 
@@ -98,11 +107,11 @@ class MainActivity : AppCompatActivity() {
 
     fun buildDicts(Json: JSONObject) {
 
-        for (k in json.keys()) {
-            var code = json[k];
+        for (k in Json.keys()) {
+            var code = Json[k];
 
-            letToCodeDict.set(k,code)
-            CodeToLetDict.set(code,k)
+            letToCodeDict.set(k,code.toString())
+            CodeToLetDict.set(code.toString(),k)
 
             Log.d("log", "$k: $code")
         }
@@ -118,6 +127,25 @@ class MainActivity : AppCompatActivity() {
         for (k in letToCodeDict.keys.sorted()) {
             appendTextAndScroll("$k: ${letToCodeDict[k]}");
         }
+    }
+
+    fun translate(s:String) : String {
+
+        var s2 = s.toLowerCase()
+
+        var r = ""
+
+        for (c in s2) {
+
+            if (c == ' ')
+                r += " / "
+            else if (letToCodeDict.containsKey(c.toString()))
+                r += letToCodeDict.get(c.toString())
+            else
+                r += "?"
+        }
+
+        return r
     }
 
 }
