@@ -9,12 +9,12 @@
     tools:showIn="@layout/activity_main">
 
     <Button
-        android:id="@+id/testButton"
+        android:id="@+id/translateButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginStart="16dp"
-        android:text="Button"
+        android:text="Translate"
         app:layout_constraintBottom_toTopOf="@+id/outputText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/inputText" />
@@ -29,11 +29,11 @@
         android:layout_marginTop="16dp"
         android:ems="10"
         android:inputType="textPersonName"
-        app:layout_constraintBottom_toTopOf="@+id/testButton"
+        android:text="Enter message here..."
+        app:layout_constraintBottom_toTopOf="@+id/translateButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Enter message here..." />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/outputText"
@@ -47,6 +47,14 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/testButton"
+        app:layout_constraintTop_toBottomOf="@+id/translateButton"
         tools:text="Encoded message displayed here..." />
+
+    <ToggleButton
+        android:id="@+id/legendButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Legend"
+        tools:layout_editor_absoluteX="280dp"
+        tools:layout_editor_absoluteY="76dp" />
 </android.support.constraint.ConstraintLayout>

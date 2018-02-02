@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
 
         outputText.movementMethod = ScrollingMovementMethod();
 
-        testButton.setOnClickListener {view ->
+        translateButton.setOnClickListener { view ->
             appendTextAndScroll(inputText.text.toString());
             hideKeyboard();
         }
@@ -105,7 +105,7 @@ class MainActivity : AppCompatActivity() {
 
         // Don't forget to wire button under the onCreate function above
         // textView.append("HERE ARE THE CODES");
-        
+
         appendTextAndScroll("HERE ARE THE CODES");
 
         for (k in letToCodeDict.keys.sorted()) {
