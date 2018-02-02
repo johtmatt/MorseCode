@@ -50,11 +50,14 @@
         app:layout_constraintTop_toBottomOf="@+id/translateButton"
         tools:text="Encoded message displayed here..." />
 
-    <ToggleButton
+    <Button
         android:id="@+id/legendButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="17dp"
         android:text="Legend"
-        tools:layout_editor_absoluteX="280dp"
-        tools:layout_editor_absoluteY="76dp" />
+        app:layout_constraintBottom_toTopOf="@+id/outputText"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </android.support.constraint.ConstraintLayout>

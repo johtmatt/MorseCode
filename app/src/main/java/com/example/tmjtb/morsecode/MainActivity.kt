@@ -34,6 +34,13 @@ class MainActivity : AppCompatActivity() {
             appendTextAndScroll(inputText.text.toString());
             hideKeyboard();
         }
+
+        val jsonObj = loadMorseJSONObject()
+
+        /*legendButton.setOnClickListener { view ->
+            appendTextAndScroll(jsonObj.text.toString());
+            hideKeyboard();
+        }*/
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -86,8 +93,8 @@ class MainActivity : AppCompatActivity() {
         return jsonObj;
     }
 
-    var letToCode : HashMap<String, String> = HashMap()
-    var CodeToLet : HashMap<String, String> = HashMap()
+    var letToCodeDict : HashMap<String, String> = HashMap()
+    var CodeToLetDict : HashMap<String, String> = HashMap()
 
     fun buildDicts(Json: JSONObject) {
 
@@ -95,13 +102,13 @@ class MainActivity : AppCompatActivity() {
             var code = json[k];
 
             letToCodeDict.set(k,code)
-            CodtToLetDict.set(code,k)
+            CodeToLetDict.set(code,k)
 
             Log.d("log", "$k: $code")
         }
     }
 
-    fun showCodes() {
+    fun legendButton() {
 
         // Don't forget to wire button under the onCreate function above
         // textView.append("HERE ARE THE CODES");
