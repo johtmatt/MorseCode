@@ -28,25 +28,24 @@ class MainActivity : AppCompatActivity() {
                     .setAction("Action", null).show()
         }
 
-        outputText.movementMethod = ScrollingMovementMethod();
+        outputText.movementMethod = ScrollingMovementMethod()
 
         translateButton.setOnClickListener { view ->
-            appendTextAndScroll(inputText.text.toString());
+            appendTextAndScroll(inputText.text.toString())
             appendTextAndScroll(translate(inputText.text.toString()))
-            hideKeyboard();
+            hideKeyboard()
         }
 
         testButton.setOnClickListener { view ->
-            appendTextAndScroll(inputText.text.toString());
-            //appendTextAndScroll(translate(inputText.text.toString()))
-            hideKeyboard();
+            appendTextAndScroll(inputText.text.toString())
+            hideKeyboard()
         }
 
         val jsonObj = loadMorseJSONObject()
 
         legendButton.setOnClickListener { view ->
-            appendTextAndScroll(jsonObj.toString());
-            hideKeyboard();
+            appendTextAndScroll(jsonObj.toString())
+            hideKeyboard()
         }
 
         buildDicts(jsonObj)
@@ -119,9 +118,6 @@ class MainActivity : AppCompatActivity() {
 
     fun legendButton() {
 
-        // Don't forget to wire button under the onCreate function above
-        // textView.append("HERE ARE THE CODES");
-
         appendTextAndScroll("HERE ARE THE CODES");
 
         for (k in letToCodeDict.keys.sorted()) {
@@ -139,13 +135,62 @@ class MainActivity : AppCompatActivity() {
 
             if (c == ' ')
                 r += " / "
-            else if (letToCodeDict.containsKey(c.toString()))
+            else /*if*/ (letToCodeDict.containsKey(c.toString()))
                 r += letToCodeDict.get(c.toString())
-            else
-                r += "?"
+            /*else
+                r += "?"*/
         }
 
         return r
+    }
+
+    fun playString(S:String, i: Int = 0) : Unit {
+
+        if (i > s.length - 1)
+            return;
+
+        var mDelay: Long = 0;
+
+        var thenFun: () -> Unit = { ->
+            this@MainActivity.runOnUiThread(java.lang.Runnable {
+                playString(s, i+1)
+            })
+        }
+
+        var c = s[i]
+        Lod.d("Log", "Processing psl: " + i + " char: [" + c + "]")
+
+        if (c == '.')
+            playDot(thenFun)
+        else if
+            playDash(thenFun)
+        else if (c == '/')
+            pause(6+dotLength, thenFun)
+        else if (c == ' ')
+            pause( 2+dotLength, thenFun)
+    }
+
+    val dotLength:Int = 50
+    val dashLength:Int = dotLength * 3
+
+    val dotSoundBuffer:ShortArray = genSineWaveSoundBuffer(550.0, dotLength)
+    val dashSoundBuffer:ShortArray = genSineWaveSoundBuffer(550.0, dashLength)
+
+    fun playDash(onDone : () -> Unit = {}) {
+        Log.d("DEBUG", "playDash")
+        playSoundBuffer(dashSoundBuffer, { -> pause(dotLength, onDone)})
+    }
+
+    fun playDot(onDone : () -> Unit = {}) {
+        Log.d("DEBUG", "playDot")
+        playSoundBuffer(dotSoundBuffer, { -> pause(dotLength, onDone)})
+    }
+
+    fun pause(durationMSec: Int, onDone : () -> Unit = {}){
+        Log.d("DEBUG", "pause" + durationMSec)
+        Timer().schedule(timerTask {
+            onDone()
+        }, durationMSec.toLong())
     }
 
 }
