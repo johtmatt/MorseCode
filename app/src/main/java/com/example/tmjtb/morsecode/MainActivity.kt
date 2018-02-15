@@ -24,6 +24,9 @@ import kotlin.concurrent.timerTask
 
 class MainActivity : AppCompatActivity() {
 
+    val letToCodeDict : HashMap<String, String> = HashMap<String, String>()
+    val codeToLetDict : HashMap<String, String> = HashMap<String, String>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -35,26 +38,36 @@ class MainActivity : AppCompatActivity() {
         }
 
         outputText.movementMethod = ScrollingMovementMethod()
-
-        translateButton.setOnClickListener { view ->
-            appendTextAndScroll(inputText.text.toString())
-            appendTextAndScroll(translate(inputText.text.toString()))
-            hideKeyboard()
-        }
-
         testButton.setOnClickListener { view ->
-            appendTextAndScroll(inputText.text.toString())
+            appendTextAndScroll(inputText.text.toString().toUpperCase())
             hideKeyboard()
         }
 
-        val jsonObj = loadMorseJSONObject()
+        val jsonObj = loadMorseJSONFile()
+        buildDicts(jsonObj)
 
         legendButton.setOnClickListener { view ->
-            appendTextAndScroll(jsonObj.toString())
+            outputText.text = ""
+            legendButton()
             hideKeyboard()
         }
 
-        buildDicts(jsonObj)
+        translateButton.setOnClickListener { _ ->
+            outputText.text = ""
+            val input = inputText.text.toString()
+
+            appendTextAndScroll(input.toUpperCase())
+
+            if (input.matches("(\\.|-|\\s/\\s|\\s)+".toRegex())) {
+                val transMorse = translateMorse(input)
+                appendTextAndScroll(transMorse.toUpperCase())
+            }
+            else {
+                val transText = translateText(input)
+                appendTextAndScroll(transText)
+            }
+            hideKeyboard()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -95,56 +108,75 @@ class MainActivity : AppCompatActivity() {
         inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
-    fun loadMorseJSONObject() : JSONObject {
-        val filePath = "morse.json";
+    private fun loadMorseJSONFile() : JSONObject {
+        val filePath = "morse.json"
 
         val jsonStr = application.assets.open(filePath).bufferedReader().use{
             it.readText()
         }
 
-        val jsonObj = JSONObject(jsonStr.substring(jsonStr.indexOf("{"), jsonStr.lastIndexOf("}") + 1));
+        val jsonObj = JSONObject(jsonStr.substring(jsonStr.indexOf("{"), jsonStr.lastIndexOf("}") + 1))
 
-        return jsonObj;
+        return jsonObj
     }
 
-    var letToCodeDict : HashMap<String, String> = HashMap()
-    var CodeToLetDict : HashMap<String, String> = HashMap()
-
-    fun buildDicts(Json: JSONObject) {
+    private fun buildDicts(Json: JSONObject) {
 
         for (k in Json.keys()) {
-            var code = Json[k];
+            var code: String = Json[k] as String
 
-            letToCodeDict.set(k,code.toString())
-            CodeToLetDict.set(code.toString(),k)
+            letToCodeDict.put(k, code)
+            codeToLetDict.put(code, k)
 
             Log.d("log", "$k: $code")
         }
     }
 
-    fun legendButton() {
+    private fun legendButton() {
 
-        appendTextAndScroll("HERE ARE THE CODES");
+        appendTextAndScroll("HERE ARE THE CODES")
 
         for (k in letToCodeDict.keys.sorted()) {
-            appendTextAndScroll("$k: ${letToCodeDict[k]}");
+            appendTextAndScroll("${k.toUpperCase()}: ${letToCodeDict[k]}")
         }
     }
 
-    fun translate(s:String) : String {
+    private fun translateText(input : String) : String {
 
-        var s2 = s.toLowerCase()
-        var r = ""
+        var value = ""
 
-        for (c in s2) {
-            if (c == ' ')
-                r += " / "
-            else /*if*/ (letToCodeDict.containsKey(c.toString()))
-                r += letToCodeDict.get(c.toString())
-            /*else
-                r += "?"*/
+        val lowerStr = input.toLowerCase()
+
+        for (c in lowerStr) // Loop for checking all the input
+        {
+            // if space than explode
+            if (c == ' ') value += "/ "
+            else if (letToCodeDict.containsKey(c.toString())) value += "${letToCodeDict[c.toString()]} "
+            else value += "? "
         }
-        return r
+
+        Log.d("log", "Morse: $value")
+
+        return value
+
+    }
+
+    private fun translateMorse(input: String) : String {
+        var value = ""
+
+        val lowerStr = input.split("(\\s)+".toRegex())
+
+        Log.d("log", "Split stirng: $lowerStr")
+
+        for (item in lowerStr) {
+            if (item == "/") value += " "
+            else if (codeToLetDict.containsKey(item)) value += codeToLetDict[item]
+            else value += "[NA]"
+        }
+
+        Log.d("log", "Text: $value")
+
+        return value
     }
 
     fun playString(s:String, i: Int = 0) : Unit {
@@ -165,7 +197,7 @@ class MainActivity : AppCompatActivity() {
 
         if (c == '.')
             playDot(thenFun)
-        else if
+        else if (c == '-')
             playDash(thenFun)
         else if (c == '/')
             pause(6+dotLength, thenFun)
@@ -232,8 +264,8 @@ class MainActivity : AppCompatActivity() {
         mAudioTrack.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume())
         mAudioTrack.setNotificationMarkerPosition(mBuffer.size)
         mAudioTrack.setPlaybackPositionUpdateListener(object : AudioTrack.OnPlaybackPositionUpdateListener {
-            override fun onPeriodNotification(track: AudioTrack) {}
-            override fun onMarkerReached(track: AudioTrack) {
+            override fun onPeriodicNotification(track : AudioTrack) {}
+            override fun onMarkerReached(track : AudioTrack) {
                 Log.d("Log", "Audio track end of file reached...")
                 mAudioTrack.stop()
                 mAudioTrack.release()
