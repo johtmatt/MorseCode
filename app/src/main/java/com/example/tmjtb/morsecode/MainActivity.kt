@@ -1,12 +1,17 @@
 package com.example.tmjtb.morsecode
 
+// SAMPLE RATE VARIABLE HAS TO BE GLOBAL
+
 import kotlinx.android.synthetic.main.content_main.*
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.content.SharedPreferences
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Bundle
+import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
 import android.text.method.ScrollingMovementMethod
@@ -22,7 +27,11 @@ import java.lang.Math.round
 import java.util.*
 import kotlin.concurrent.timerTask
 
+val SAMPLE_RATE = 44100
+
 class MainActivity : AppCompatActivity() {
+
+    var prefs: SharedPreferences? = null
 
     val letToCodeDict : HashMap<String, String> = HashMap<String, String>()
     val codeToLetDict : HashMap<String, String> = HashMap<String, String>()
@@ -68,6 +77,16 @@ class MainActivity : AppCompatActivity() {
             }
             hideKeyboard()
         }
+
+        playButton.setOnClickListener { _ ->
+            val input = inputText.text.toString()
+            playString(translateText(input),0)
+        }
+
+        prefs = getDefaultSharedPreferences(this.applicationContext)
+
+        val morsePitch = prefs!!.getString("morse_pitch", "550").toInt()
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -81,7 +100,14 @@ class MainActivity : AppCompatActivity() {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> true
+            R.id.action_settings -> {
+
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
+
+                return true
+
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -180,70 +206,61 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun playString(s:String, i: Int = 0) : Unit {
-
-        if (i > s.length - 1)
+        if (i>s.length-1)
             return;
-
         var mDelay: Long = 0;
 
         var thenFun: () -> Unit = { ->
-            this@MainActivity.runOnUiThread(java.lang.Runnable {
-                playString(s, i+1)
-            })
+            this@MainActivity.runOnUiThread(java.lang.Runnable {playString(s, i+1)})
         }
 
         var c = s[i]
-        Log.d("Log", "Processing psl: " + i + " char: [" + c + "]")
-
-        if (c == '.')
+        Log.d("Log", "Processing pos: " + i + " char: [" + c + "]")
+        if (c=='.')
             playDot(thenFun)
-        else if (c == '-')
+        else if (c=='-')
             playDash(thenFun)
-        else if (c == '/')
-            pause(6+dotLength, thenFun)
-        else if (c == ' ')
-            pause( 2+dotLength, thenFun)
+        else if (c=='/')
+            pause(6*dotLength, thenFun)
+        else if (c==' ')
+            pause(2*dotLength, thenFun)
     }
 
     val dotLength:Int = 50
-    val dashLength:Int = dotLength * 3
+    val dashLength:Int = dotLength*3
 
-    val dotSoundBuffer:ShortArray = genSineWaveSoundBuffer(550.0, dotLength)
+    val dotSoundBuffer: ShortArray = genSineWaveSoundBuffer(550.0, dotLength) //freq: 550.0
     val dashSoundBuffer:ShortArray = genSineWaveSoundBuffer(550.0, dashLength)
 
-    fun playDash(onDone : () -> Unit = {}) {
+    fun playDash(onDone:()->Unit={}){
         Log.d("DEBUG", "playDash")
-        playSoundBuffer(dashSoundBuffer, { -> pause(dotLength, onDone)})
+        playSoundBuffer(dashSoundBuffer,{->pause(dotLength, onDone)})
     }
-
-    fun playDot(onDone : () -> Unit = {}) {
+    fun playDot(onDone: () -> Unit={}){
         Log.d("DEBUG", "playDot")
-        playSoundBuffer(dotSoundBuffer, { -> pause(dotLength, onDone)})
+        playSoundBuffer(dotSoundBuffer,{ -> pause(dotLength, onDone)})
     }
 
-    fun pause(durationMSec: Int, onDone : () -> Unit = {}){
-        Log.d("DEBUG", "pause" + durationMSec)
-        Timer().schedule(timerTask {
-            onDone()
-        }, durationMSec.toLong())
+    fun pause(durationMSec:Int, onDone: () -> Unit={}){
+        Log.d("DEBUG", "pause: ${durationMSec}")
+        Timer().schedule(timerTask { onDone()  }, durationMSec.toLong())
     }
 
-    val SAMPLE_RATE = 44100
+    private fun genSineWaveSoundBuffer(frequency:Double, durationMSec: Int):ShortArray{
+        val duration : Int = Math.round((durationMSec/1000.0) * SAMPLE_RATE).toInt()
 
-    private fun genSineWaveSoundBuffer(frequency: Double, durationMSec: Int) : ShortArray {
-        val duration: Int = round((durationMSec / 1000.0) * SAMPLE_RATE).toInt()
-
-        var mSound : Double
+        var mSound: Double
         val mBuffer = ShortArray(duration)
-        for (i in 0 until duration) {
-            mSound = Math.sin(2.0 * Math.PI * i.toDouble() / (SAMPLE_RATE / frequency))
-            mBuffer[i] = (mSound * java.lang.Short.MAX_VALUE).toShort()
+        for(i in 0 until duration) {
+            mSound= Math.sin(2.0*Math.PI*i.toDouble()/(SAMPLE_RATE/frequency))
+            mBuffer[i] = (mSound*java.lang.Short.MAX_VALUE).toShort()
         }
         return mBuffer
     }
 
-    private fun playSoundBuffer(mBuffer:ShortArray, onDone : () -> Unit = {}) {
-        var minBufferSize = SAMPLE_RATE/10
+
+    private fun playSoundBuffer (mBuffer: ShortArray, onDone: () -> Unit={ }) {
+        var minBufferSize = SAMPLE_RATE / 10
         if (minBufferSize < mBuffer.size) {
             minBufferSize = minBufferSize + minBufferSize *
                     (Math.round(mBuffer.size.toFloat()) / minBufferSize.toFloat()).toInt()
@@ -258,14 +275,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         val mAudioTrack = AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE,
-        AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
-        minBufferSize, AudioTrack.MODE_STREAM)
+                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
+                minBufferSize, AudioTrack.MODE_STREAM)
 
         mAudioTrack.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume())
         mAudioTrack.setNotificationMarkerPosition(mBuffer.size)
         mAudioTrack.setPlaybackPositionUpdateListener(object : AudioTrack.OnPlaybackPositionUpdateListener {
-            override fun onPeriodicNotification(track : AudioTrack) {}
-            override fun onMarkerReached(track : AudioTrack) {
+            override fun onPeriodicNotification(track: AudioTrack){}
+            override fun onMarkerReached(track: AudioTrack?) {
                 Log.d("Log", "Audio track end of file reached...")
                 mAudioTrack.stop()
                 mAudioTrack.release()
