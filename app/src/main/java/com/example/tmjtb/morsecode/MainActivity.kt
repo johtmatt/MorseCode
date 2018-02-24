@@ -2,11 +2,15 @@ package com.example.tmjtb.morsecode
 
 // SAMPLE RATE VARIABLE HAS TO BE GLOBAL
 
+import android.Manifest.permission.SEND_SMS
 import kotlinx.android.synthetic.main.content_main.*
 import android.app.Activity
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
@@ -14,12 +18,14 @@ import android.os.Bundle
 import android.preference.PreferenceManager.getDefaultSharedPreferences
 import android.support.design.widget.Snackbar
 import android.support.v7.app.AppCompatActivity
+import android.telephony.SmsManager
 import android.text.method.ScrollingMovementMethod
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONObject
@@ -86,6 +92,10 @@ class MainActivity : AppCompatActivity() {
         prefs = getDefaultSharedPreferences(this.applicationContext)
 
         val morsePitch = prefs!!.getString("morse_pitch", "550").toInt()
+
+        fab.setOnClickListener { view ->
+            sendSMS("9312423238", outputText.text.toString())
+        }
 
     }
 
@@ -293,4 +303,66 @@ class MainActivity : AppCompatActivity() {
         mAudioTrack.write(nBuffer, 0, minBufferSize)
     }
 
+    private fun sendSMS(phoneNumber:String, message:String) {
+        val sentPendingIntents = ArrayList<PendingIntent>()
+        val deliveredPendingIntents = ArrayList<PendingIntent>()
+
+        val sentPI = PendingIntent.getBroadcast( this, 0,
+                Intent(this, SmsSentReceiver::class.java), 0)
+        val deliveredPI = PendingIntent.getBroadcast(this , 0,
+                Intent(this , SmsDeliveredReceiver::class.java), 0)
+
+        val PERMISSION_REQUEST_CODE = 1
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M)
+        {
+            if ((checkSelfPermission(SEND_SMS) === PackageManager.PERMISSION_DENIED))
+            {
+                Log.d("permission", "permission denied to SEND_SMS - requesting it")
+                val permissions = arrayOf<String>(SEND_SMS)
+                requestPermissions(permissions, PERMISSION_REQUEST_CODE)
+            }
+        }
+
+
+        try{
+            val sms = SmsManager.getDefault()
+            val mSMSMessage = sms.divideMessage(message)
+            for (i in 0 until mSMSMessage.size)
+            {
+                sentPendingIntents.add(i, sentPI)
+                deliveredPendingIntents.add(i, deliveredPI)
+            }
+            sms.sendMultipartTextMessage(phoneNumber, null, mSMSMessage,
+                    sentPendingIntents, deliveredPendingIntents)
+        }
+        catch (e:Exception) {
+            e.printStackTrace()
+            Toast.makeText(getBaseContext(), "SMS sending failed...", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    class SmsDeliveredReceiver: BroadcastReceiver() {
+        override fun onReceive(context:Context, arg1:Intent) {
+            when (getResultCode()) {
+                Activity.RESULT_OK -> Toast.makeText(context, "SMS delivered", Toast.LENGTH_SHORT).show()
+                Activity.RESULT_CANCELED -> Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    class SmsSentReceiver:BroadcastReceiver() {
+        override fun onReceive(context:Context, arg1:Intent) {
+            when (getResultCode()) {
+                Activity.RESULT_OK -> Toast.makeText(context, "SMS Sent", Toast.LENGTH_SHORT).show()
+                SmsManager.RESULT_ERROR_GENERIC_FAILURE -> Toast.makeText(context, "SMS generic failure", Toast.LENGTH_SHORT)
+                        .show()
+                SmsManager.RESULT_ERROR_NO_SERVICE -> Toast.makeText(context, "SMS no service", Toast.LENGTH_SHORT)
+                        .show()
+                SmsManager.RESULT_ERROR_NULL_PDU -> Toast.makeText(context, "SMS null PDU", Toast.LENGTH_SHORT).show()
+                SmsManager.RESULT_ERROR_RADIO_OFF -> Toast.makeText(context, "SMS radio off", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
 }
+
